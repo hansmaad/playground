@@ -13,18 +13,19 @@ public:
         stream(s)
     {}
     
-    template<typename T>
-    void write(const T& t)
-    {
-        stream << t;
-    }
-    
     lock_type get_lock()
     {
         return lock_type(mutex);
     }
-    
+ 
 private:
+    friend class sync_ostream_transaction;
+    template<typename T>
+    void write(const T& t)
+    {
+        stream << t;
+    }   
+
     std::mutex mutex;    
     std::ostream& stream;
 };
@@ -39,7 +40,7 @@ public:
     template<typename T>
     void write(const T& t) const
     {
-        const_cast<sync_ostream&>(stream).write(t);
+        stream.write(t);
     }
 private:
     sync_ostream& stream;
@@ -56,8 +57,8 @@ sync_ostream_transaction operator<<(
 }
 
 template<typename T>
-const sync_ostream_transaction& operator<<(
-    const sync_ostream_transaction& stream, const T& t)
+sync_ostream_transaction operator<<(
+    sync_ostream_transaction stream, const T& t)
 {
     stream.write(t);    
     return stream; 
