@@ -1,41 +1,65 @@
+
 #include <iostream>
 #include <future>
 #include <chrono>
-#include "sync_ostream.hpp"
 
-sync_ostream sync_cout(std::cout);
+#include "model.hpp"
 
-void print(int i)
-{
-    sync_cout << "Call " << i << " from thread " << 
-        std::this_thread::get_id() << "\n"; 
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(10)
-    );
-}
 
-void test_sync_ostream()
-{
-    auto f1 = std::async(std::launch::async, [] {
-        sync_cout << "Start 1";
-        for(int i = 0; i < 10; ++i)
-        {
-            print(i); 
-        }});
-            
-    auto f2 = std::async(std::launch::async, [] {
-        sync_cout << "Start 2";
-        for(int i = 0; i < 10; ++i)
-        {
-            print(i); 
-        }});
-            
-    f1.wait();
-    f2.wait();
-}
+struct SimpleModel
+{   
+    SimpleModel(double result) : result(result)
+    {
+        std::cout << "ctor(double)\n";
+    }
+
+    SimpleModel(const SimpleModel& m)
+        : result(m.result)
+    {
+        std::cout << "ctor(SimpleModel)\n";
+    }
+
+    SimpleModel(SimpleModel&& m) noexcept
+        : result(m.result)
+    {
+        std::cout << "ctor(SimpleModel&&)\n";
+    }
+
+    void operator=(SimpleModel& m) noexcept
+    {
+        result = m.result;
+        std::cout << "=(SimpleModel&)\n";
+    }
+
+    void operator=(SimpleModel&& m) noexcept
+    {
+        result = m.result;
+        std::cout << "=(SimpleModel&&)\n";
+    }
+
+    ~SimpleModel() noexcept
+    {
+        std::cout << "dtor\n";
+    }
+
+    double Calculate(const Duct& duct)
+    {
+        std::cout << "Simple\n";
+        return result;
+    }
+    double result;
+};
+
 
 int main()
 {  
-    test_sync_ostream();
+    using namespace std;
+
+    Model m(SimpleModel(3.14));
+    m.Calculate(Duct());
+    m.Calculate(Duct());
+
+    cout << "Hello World!\n";
+
 }
 
